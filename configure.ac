@@ -32,5 +32,6 @@ AC_CHECK_FUNCS(atexit dup2 memset)
 AC_CHECK_FUNCS(select socket strerror)
 AC_CHECK_FUNCS(openpty forkpty ptsname grantpt unlockpt)
 
+AC_SUBST(ac_config_files)
 AC_CONFIG_FILES(Makefile)
 AC_OUTPUT

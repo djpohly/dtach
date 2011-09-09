@@ -18,6 +18,22 @@
 */
 #include "dtach.h"
 
+/* Make sure the binary has a copyright. */
+const char copyright[] = "dtach - version " PACKAGE_VERSION
+	" (C) Copyright 2004-2008 Ned T. Crigler,"
+	" 2011 Devin J. Pohly";
+
+/* argv[0] from the program */
+char *progname;
+/* The name of the passed in socket. */
+char *sockname;
+/* The default redraw method. If unspecified, use SIGWINCH. */
+int redraw_method = REDRAW_CTRL_L;
+
+/* The original terminal settings, for initializing the pty. */
+struct termios orig_term;
+int dont_have_tty;
+
 /* The pty struct - The pty information is stored here. */
 struct pty
 {
@@ -58,6 +74,35 @@ static struct pty the_pty;
 pid_t forkpty(int *amaster, char *name, struct termios *termp,
 	struct winsize *winp);
 #endif
+
+static void
+usage()
+{
+	printf(
+		"dtmaster - version %s, compiled on %s at %s.\n"
+		"Usage: dtmaster <socket> <options> <command> [arg...]\n"
+		"Options:\n"
+		"  -n\t\tDo not fork after running the command.\n"
+		"  -w\t\tWait for a client to attach before processing any "
+		"output\n"
+		"\t\t  from the command.\n"
+		"  -r <method>\tSet the default redraw method to <method>. The "
+		"valid\n"
+		"\t\t  methods are:\n"
+		"\t\t     none: Don't redraw at all.\n"
+		"\t\t   ctrl_l: Send a Ctrl-L character to the program.\n"
+		"\t\t    winch: Send SIGWINCH to the program.\n"
+		"\nReport any bugs to <%s>.\n",
+		PACKAGE_VERSION, __DATE__, __TIME__, PACKAGE_BUGREPORT);
+	exit(0);
+}
+
+int
+main(int argc, char **argv)
+{
+	usage();
+	return 0;
+}
 
 /* Unlink the socket */
 static void

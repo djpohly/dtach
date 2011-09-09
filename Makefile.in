@@ -2,26 +2,25 @@ srcdir = @srcdir@
 CC = @CC@
 CFLAGS = @CFLAGS@ -I.
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
+LDLIBS = @LIBS@
 VERSION = @PACKAGE_VERSION@
 VPATH = $(srcdir)
 
-OBJ = attach.o master.o main.o
-SRC = $(srcdir)/attach.c $(srcdir)/master.c $(srcdir)/main.c
+BIN = dtattach dtmaster
+SRC = $(srcdir)/dtattach.c $(srcdir)/dtmaster.c
 
 TARFILES = $(srcdir)/README $(srcdir)/COPYING $(srcdir)/Makefile.in \
 	   $(srcdir)/config.h.in $(SRC) \
 	   $(srcdir)/dtach.h $(srcdir)/configure \
 	   $(srcdir)/configure.ac $(srcdir)/dtach.1
 
-dtach: $(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LIBS)
+all: $(BIN)
 
 clean:
-	rm -f dtach $(OBJ) dtach-$(VERSION).tar.gz
+	rm -f $(BIN) dtach-$(VERSION).tar.gz
 
 distclean: clean
-	rm -f config.h Makefile config.log config.status config.cache
+	rm -f @ac_config_files@ config.h config.log config.status config.cache
 
 tar:
 	mkdir dtach-$(VERSION)
@@ -30,7 +29,6 @@ tar:
 	gzip -9f dtach-$(VERSION).tar
 	rm -rf dtach-$(VERSION)
 
-attach.o: @srcdir@/attach.c @srcdir@/dtach.h config.h
-master.o: @srcdir@/master.c @srcdir@/dtach.h config.h
-main.o: @srcdir@/main.c @srcdir@/dtach.h config.h
+dtattach: @srcdir@/dtattach.c @srcdir@/dtach.h config.h
+dtmaster: @srcdir@/dtmaster.c @srcdir@/dtach.h config.h
 

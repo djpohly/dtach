@@ -18,6 +18,11 @@
 */
 #include "dtach.h"
 
+/* Make sure the binary has a copyright. */
+const char copyright[] = "dtach - version " PACKAGE_VERSION
+	" (C) Copyright 2004-2008 Ned T. Crigler,"
+	" 2011 Devin J. Pohly";
+
 #ifndef VDISABLE
 #ifdef _POSIX_VDISABLE
 #define VDISABLE _POSIX_VDISABLE
@@ -26,6 +31,20 @@
 #endif
 #endif
 
+/* argv[0] from the program */
+char *progname;
+/* The name of the passed in socket. */
+char *sockname;
+/* The character used for detaching. Defaults to '^\' */
+int detach_char = '\\' - 64;
+/* 1 if we should not interpret the suspend character. */
+int no_suspend;
+/* The default redraw method. Initially set to unspecified. */
+int redraw_method = REDRAW_UNSPEC;
+
+/* The original terminal settings, for restoring later. */
+struct termios orig_term;
+
 /*
 ** The current terminal settings. After coming back from a suspend, we
 ** restore this.
@@ -33,6 +52,34 @@
 static struct termios cur_term;
 /* 1 if the window size changed */
 static int win_changed;
+
+static void
+usage()
+{
+	printf(
+		"dtattach - version %s, compiled on %s at %s.\n"
+		"Usage: dtattach <socket> <options>\n"
+		"Options:\n"
+		"  -e <char>\tSet the detach character to <char>. Defaults "
+		"to ^\\.\n"
+		"\t\t  Use \"\" to disable.\n"
+		"  -r <method>\tSet the redraw method to <method>. The "
+		"valid methods are:\n"
+		"\t\t     none: Don't redraw at all.\n"
+		"\t\t   ctrl_l: Send a Ctrl L character to the program.\n"
+		"\t\t    winch: Send a WINCH signal to the program.\n"
+		"  -z\t\tDisable processing of the suspend key.\n"
+		"\nReport any bugs to <%s>.\n",
+		PACKAGE_VERSION, __DATE__, __TIME__, PACKAGE_BUGREPORT);
+	exit(0);
+}
+
+int
+main(int argc, char **argv)
+{
+	usage();
+	return 0;
+}
 
 /* Restores the original terminal settings. */
 static void
