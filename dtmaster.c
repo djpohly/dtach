@@ -18,11 +18,11 @@
 */
 #include "dtach.h"
 
-const char version[] =
-	"dtmaster - version " PACKAGE_VERSION ", compiled on " __DATE__
-	" at " __TIME__ ".";
+/* Make sure the binary has a copyright. */
 const char copyright[] =
-	"(C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly.";
+	"dtmaster - version " PACKAGE_VERSION ", compiled on " __DATE__
+	" at " __TIME__ ".\n"
+	"(C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly.\n";
 
 /* argv[0] from the program */
 char *progname;
@@ -643,14 +643,14 @@ main(int argc, char **argv)
 		return 1;
 	}
 
-	if (strcmp(*argv, "--help") == 0)
+	if (strcmp(*argv, "--help") == 0 || strcmp(*argv, "-?") == 0)
 	{
 		usage();
 		return 0;
 	}
 	else if (strcmp(*argv, "--version") == 0)
 	{
-		printf("%s\n%s\n", version, copyright);
+		printf("%s", copyright);
 		return 0;
 	}
 	sockname = *argv;
@@ -672,9 +672,9 @@ main(int argc, char **argv)
 				if (argc < 1)
 				{
 					printf("%s: No redraw method "
-							"specified.\n", progname);	
+						"specified.\n", progname);	
 					printf("Try '%s --help' for more "
-							"information.\n", progname);
+						"information.\n", progname);
 					return 1;
 				}
 				if (strcmp(argv[0], "none") == 0)
@@ -686,9 +686,9 @@ main(int argc, char **argv)
 				else
 				{
 					printf("%s: Invalid redraw method "
-							"specified.\n", progname);	
+						"specified.\n", progname);	
 					printf("Try '%s --help' for more "
-							"information.\n", progname);
+						"information.\n", progname);
 					return 1;
 				}
 				break;
@@ -701,9 +701,9 @@ main(int argc, char **argv)
 			else
 			{
 				printf("%s: Invalid option '-%c'\n",
-						progname, *p);
+					progname, *p);
 				printf("Try '%s --help' for more information.\n",
-						progname);
+					progname);
 				return 1;
 			}
 		}

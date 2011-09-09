@@ -19,9 +19,10 @@
 #include "dtach.h"
 
 /* Make sure the binary has a copyright. */
-const char copyright[] = "dtach - version " PACKAGE_VERSION
-	" (C) Copyright 2004-2008 Ned T. Crigler,"
-	" 2011 Devin J. Pohly";
+const char copyright[] =
+	"dtattach - version " PACKAGE_VERSION ", compiled on " __DATE__
+	" at " __TIME__ ".\n"
+	" (C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly\n";
 
 #ifndef VDISABLE
 #ifdef _POSIX_VDISABLE
@@ -72,13 +73,6 @@ usage()
 		"\nReport any bugs to <%s>.\n",
 		PACKAGE_VERSION, __DATE__, __TIME__, PACKAGE_BUGREPORT);
 	exit(0);
-}
-
-int
-main(int argc, char **argv)
-{
-	usage();
-	return 0;
 }
 
 /* Restores the original terminal settings. */
@@ -305,4 +299,125 @@ attach_main(int noerror)
 		}
 	}
 	return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+	/* Save the program name */
+	progname = argv[0];
+	++argv; --argc;
+
+	/* Parse the arguments */
+	if (argc < 1)
+	{
+		printf("%s: No socket was specified.\n", progname);
+		printf("Try '%s --help' for more information.\n",
+			progname);
+		return 1;
+	}
+
+	if (strcmp(*argv, "--help") == 0 || strcmp(*argv, "-?") == 0)
+	{
+		usage();
+		return 0;
+	}
+	else if (strcmp(*argv, "--version") == 0)
+	{
+		printf("%s", copyright);
+		return 0;
+	}
+	sockname = *argv;
+	++argv; --argc;
+
+	while (argc >= 1 && **argv == '-')
+	{
+		char *p;
+
+		for (p = *argv + 1; *p; ++p)
+		{
+			if (*p == 'z')
+				no_suspend = 1;
+			else if (*p == 'e')
+			{
+				++argv; --argc;
+				if (argc < 1)
+				{
+					printf("%s: No escape character "
+						"specified.\n", progname);	
+					printf("Try '%s --help' for more "
+						"information.\n", progname);
+					return 1;
+				}
+				if (argv[0][0] == '^' && argv[0][1])
+				{
+					if (argv[0][1] == '?')
+						detach_char = '\177';
+					else
+						detach_char = argv[0][1] & 037;
+				}
+				else if (!argv[0][0])
+					detach_char = -1;
+				else
+					detach_char = argv[0][0];
+				break;
+			}
+			else if (*p == 'r')
+			{
+				++argv; --argc;
+				if (argc < 1)
+				{
+					printf("%s: No redraw method "
+						"specified.\n", progname);	
+					printf("Try '%s --help' for more "
+						"information.\n", progname);
+					return 1;
+				}
+				if (strcmp(argv[0], "none") == 0)
+					redraw_method = REDRAW_NONE;
+				else if (strcmp(argv[0], "ctrl_l") == 0)
+					redraw_method = REDRAW_CTRL_L;
+				else if (strcmp(argv[0], "winch") == 0)
+					redraw_method = REDRAW_WINCH;
+				else
+				{
+					printf("%s: Invalid redraw method "
+						"specified.\n", progname);	
+					printf("Try '%s --help' for more "
+						"information.\n", progname);
+					return 1;
+				}
+				break;
+			}
+			else if (*p == '?')
+			{
+				usage();
+				return 0;
+			}
+			else
+			{
+				printf("%s: Invalid option '-%c'\n",
+					progname, *p);
+				printf("Try '%s --help' for more information.\n",
+					progname);
+				return 1;
+			}
+		}
+		++argv; --argc;
+	}
+
+	if (argc > 0)
+	{
+		printf("%s: Invalid number of arguments.\n",
+			progname);
+		printf("Try '%s --help' for more information.\n",
+			progname);
+		return 1;
+	}
+
+	/* Save the original terminal settings. */
+	if (tcgetattr(0, &orig_term) < 0)
+		memset(&orig_term, 0, sizeof(struct termios));
+
+	return attach_main(0);
 }
