@@ -18,10 +18,11 @@
 */
 #include "dtach.h"
 
-/* Make sure the binary has a copyright. */
-const char copyright[] = "dtach - version " PACKAGE_VERSION
-	" (C) Copyright 2004-2008 Ned T. Crigler,"
-	" 2011 Devin J. Pohly";
+const char version[] =
+	"dtmaster - version " PACKAGE_VERSION ", compiled on " __DATE__
+	" at " __TIME__ ".";
+const char copyright[] =
+	"(C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly.";
 
 /* argv[0] from the program */
 char *progname;
@@ -79,7 +80,6 @@ static void
 usage()
 {
 	printf(
-		"dtmaster - version %s, compiled on %s at %s.\n"
 		"Usage: dtmaster <socket> <options> <command> [arg...]\n"
 		"Options:\n"
 		"  -n\t\tDo not fork after running the command.\n"
@@ -92,16 +92,7 @@ usage()
 		"\t\t     none: Don't redraw at all.\n"
 		"\t\t   ctrl_l: Send a Ctrl-L character to the program.\n"
 		"\t\t    winch: Send SIGWINCH to the program.\n"
-		"\nReport any bugs to <%s>.\n",
-		PACKAGE_VERSION, __DATE__, __TIME__, PACKAGE_BUGREPORT);
-	exit(0);
-}
-
-int
-main(int argc, char **argv)
-{
-	usage();
-	return 0;
+		"\nReport any bugs to <%s>.\n", PACKAGE_BUGREPORT);
 }
 
 /* Unlink the socket */
@@ -552,7 +543,7 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 }
 
 int
-master_main(char **argv, int waitattach)
+master_main(char **argv, int waitattach, int nofork)
 {
 	int fd[2] = {-1, -1};
 	int s;
@@ -575,7 +566,7 @@ master_main(char **argv, int waitattach)
 
 	/* If FD_CLOEXEC works, create a pipe and use it to report any errors
 	** that occur while trying to execute the program. */
-	if (pipe(fd) >= 0)
+	if (!nofork && pipe(fd) >= 0)
 	{
 		if (fcntl(fd[0], F_SETFD, FD_CLOEXEC) < 0 ||
 		    fcntl(fd[1], F_SETFD, FD_CLOEXEC) < 0)
@@ -587,44 +578,154 @@ master_main(char **argv, int waitattach)
 	}
 #endif
 
-	/* Fork off so we can daemonize and such */
-	pid = fork();
-	if (pid < 0)
+	if (!nofork)
 	{
-		printf("%s: fork: %s\n", progname, strerror(errno));
-		unlink_socket();
-		return 1;
-	}
-	else if (pid == 0)
-	{
+		/* Fork off so we can daemonize and such */
+		pid = fork();
+		if (pid < 0)
+		{
+			printf("%s: fork: %s\n", progname, strerror(errno));
+			unlink_socket();
+			return 1;
+		}
+		else if (pid > 0)
+		{
+			/* Parent - just return. */
+#if defined(F_SETFD) && defined(FD_CLOEXEC)
+			/* Check if an error occurred while trying to execute
+			** the program. */
+			if (fd[0] != -1)
+			{
+				char buf[1024];
+				int len;
+
+				close(fd[1]);
+				len = read(fd[0], buf, sizeof(buf));
+				if (len > 0)
+				{
+					write(2, buf, len);
+					kill(pid, SIGTERM);
+					return 1;
+				}
+				close(fd[0]);
+			}
+#endif
+			close(s);
+			return 0;
+		}
 		/* Child - this becomes the master */
 		if (fd[0] != -1)
 			close(fd[0]);
-		master_process(s, argv, waitattach, fd[1]);
+	}
+	else /* Not forking, send status to stderr */
+		fd[1] = dup(2);
+
+	master_process(s, argv, waitattach, fd[1]);
+	return 0;
+}
+
+int
+main(int argc, char **argv)
+{
+	int nofork = 0;
+	int waitattach = 0;
+
+	/* Save the program name */
+	progname = argv[0];
+	++argv; --argc;
+
+	/* Parse the arguments */
+	if (argc < 1)
+	{
+		printf("%s: No socket was specified.\n", progname);
+		printf("Try '%s --help' for more information.\n",
+			progname);
+		return 1;
+	}
+
+	if (strcmp(*argv, "--help") == 0)
+	{
+		usage();
 		return 0;
 	}
-	/* Parent - just return. */
-
-#if defined(F_SETFD) && defined(FD_CLOEXEC)
-	/* Check if an error occurred while trying to execute the program. */
-	if (fd[0] != -1)
+	else if (strcmp(*argv, "--version") == 0)
 	{
-		char buf[1024];
-		int len;
-
-		close(fd[1]);
-		len = read(fd[0], buf, sizeof(buf));
-		if (len > 0)
-		{
-			write(2, buf, len);
-			kill(pid, SIGTERM);
-			return 1;
-		}
-		close(fd[0]);
+		printf("%s\n%s\n", version, copyright);
+		return 0;
 	}
-#endif
-	close(s);
-	return 0;
+	sockname = *argv;
+	++argv; --argc;
+
+	while (argc >= 1 && **argv == '-')
+	{
+		char *p;
+
+		for (p = *argv + 1; *p; ++p)
+		{
+			if (*p == 'n')
+				nofork = 1;
+			else if (*p == 'w')
+				waitattach = 1;
+			else if (*p == 'r')
+			{
+				++argv; --argc;
+				if (argc < 1)
+				{
+					printf("%s: No redraw method "
+							"specified.\n", progname);	
+					printf("Try '%s --help' for more "
+							"information.\n", progname);
+					return 1;
+				}
+				if (strcmp(argv[0], "none") == 0)
+					redraw_method = REDRAW_NONE;
+				else if (strcmp(argv[0], "ctrl_l") == 0)
+					redraw_method = REDRAW_CTRL_L;
+				else if (strcmp(argv[0], "winch") == 0)
+					redraw_method = REDRAW_WINCH;
+				else
+				{
+					printf("%s: Invalid redraw method "
+							"specified.\n", progname);	
+					printf("Try '%s --help' for more "
+							"information.\n", progname);
+					return 1;
+				}
+				break;
+			}
+			else if (*p == '?')
+			{
+				usage();
+				return 0;
+			}
+			else
+			{
+				printf("%s: Invalid option '-%c'\n",
+						progname, *p);
+				printf("Try '%s --help' for more information.\n",
+						progname);
+				return 1;
+			}
+		}
+		++argv; --argc;
+	}
+
+	if (argc < 1)
+	{
+		printf("%s: No command was specified.\n", progname);
+		printf("Try '%s --help' for more information.\n",
+			progname);
+		return 1;
+	}
+
+	/* Save the original terminal settings. */
+	if (tcgetattr(0, &orig_term) < 0)
+	{
+		memset(&orig_term, 0, sizeof(struct termios));
+		dont_have_tty = 1;
+	}
+
+	return master_main(argv, waitattach, nofork);
 }
 
 /* BSDish functions for systems that don't have them. */
