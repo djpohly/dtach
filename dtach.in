@@ -1,0 +1,30 @@
+#!/bin/bash
+
+usage()
+{
+	cat << _EOF_
+dtach - version @PACKAGE_VERSION@, compiled on @BUILD_DATE@.
+Usage: dtach -a <socket> <options>
+       dtach -A <socket> <options> <command...>
+       dtach -c <socket> <options> <command...>
+       dtach -n <socket> <options> <command...>
+Modes:
+  -a		Attach to the specified socket.
+  -A		Attach to the specified socket, or create it if it
+		  does not exist, running the specified command.
+  -c		Create a new socket and run the specified command.
+  -n		Create a new socket and run the specified command detached.
+Options:
+  -e <char>	Set the detach character to <char>, defaults to ^\.
+  -E		Disable the detach character.
+  -r <method>	Set the redraw method to <method>. The valid methods are:
+		     none: Don't redraw at all.
+		   ctrl_l: Send a Ctrl-L character to the program.
+		    winch: Send SIGWINCH to the program.
+  -z		Disable processing of the suspend key.
+
+Report any bugs to <@PACKAGE_BUGREPORT@>.
+_EOF_
+}
+
+usage

@@ -33,5 +33,7 @@ AC_CHECK_FUNCS(select socket strerror)
 AC_CHECK_FUNCS(openpty forkpty ptsname grantpt unlockpt)
 
 AC_SUBST(ac_config_files)
-AC_CONFIG_FILES(Makefile)
+AC_SUBST(BUILD_DATE, `date +%Y-%m-%d`)
+AC_DEFINE_UNQUOTED(BUILD_DATE, "$BUILD_DATE", Build date)
+AC_CONFIG_FILES(Makefile dtach, chmod +x dtach)
 AC_OUTPUT

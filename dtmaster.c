@@ -20,9 +20,8 @@
 
 /* Make sure the binary has a copyright. */
 const char copyright[] =
-	"dtmaster - version " PACKAGE_VERSION ", compiled on " __DATE__
-	" at " __TIME__ ".\n"
-	"(C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly.\n";
+	"dtmaster - version " PACKAGE_VERSION ", compiled on " BUILD_DATE ".\n"
+	" (C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly.\n";
 
 /* argv[0] from the program */
 char *progname;

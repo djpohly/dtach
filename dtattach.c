@@ -20,8 +20,7 @@
 
 /* Make sure the binary has a copyright. */
 const char copyright[] =
-	"dtattach - version " PACKAGE_VERSION ", compiled on " __DATE__
-	" at " __TIME__ ".\n"
+	"dtattach - version " PACKAGE_VERSION ", compiled on " BUILD_DATE ".\n"
 	" (C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly\n";
 
 #ifndef VDISABLE
@@ -58,7 +57,6 @@ static void
 usage()
 {
 	printf(
-		"dtattach - version %s, compiled on %s at %s.\n"
 		"Usage: dtattach <socket> <options>\n"
 		"Options:\n"
 		"  -e <char>\tSet the detach character to <char>. Defaults "
@@ -70,8 +68,7 @@ usage()
 		"\t\t   ctrl_l: Send a Ctrl L character to the program.\n"
 		"\t\t    winch: Send a WINCH signal to the program.\n"
 		"  -z\t\tDisable processing of the suspend key.\n"
-		"\nReport any bugs to <%s>.\n",
-		PACKAGE_VERSION, __DATE__, __TIME__, PACKAGE_BUGREPORT);
+		"\nReport any bugs to <%s>.\n", PACKAGE_BUGREPORT);
 	exit(0);
 }
 
