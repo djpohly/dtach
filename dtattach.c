@@ -193,7 +193,7 @@ attach_main(int noerror)
 		if (!noerror)
 			printf("%s: %s: %s\n", progname, sockname,
 				strerror(errno));
-		return 1;
+		return (errno == ECONNREFUSED) ? 2 : 1;
 	}
 
 	/* The current terminal settings are equal to the original terminal

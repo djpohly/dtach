@@ -8,12 +8,15 @@ Usage: dtach -a <socket> <options>
        dtach -A <socket> <options> <command...>
        dtach -c <socket> <options> <command...>
        dtach -n <socket> <options> <command...>
+       dtach -N <socket> <options> <command...>
 Modes:
   -a		Attach to the specified socket.
   -A		Attach to the specified socket, or create it if it
 		  does not exist, running the specified command.
   -c		Create a new socket and run the specified command.
   -n		Create a new socket and run the specified command detached.
+  -N		Create a new socket and run the specified command detached,
+		  but without forking to the background.
 Options:
   -e <char>	Set the detach character to <char>, defaults to ^\.
   -E		Disable the detach character.
@@ -27,4 +30,95 @@ Report any bugs to <@PACKAGE_BUGREPORT@>.
 _EOF_
 }
 
-usage
+declare mode= sockname= rv=
+declare -a dtmaster_opts=() dtattach_opts=()
+
+case $1 in
+	--help|-\?)
+		usage
+		exit 0
+		;;
+	--version)
+		echo "dtach - version @PACKAGE_VERSION@, compiled on @BUILD_DATE@."
+		echo " (C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly"
+		exit 0
+		;;
+	-[acnAN])
+		mode=${1:1:1}
+		;;
+	*)
+		echo "$0: No mode was specified."
+		echo "Try '$0 --help' for more information."
+		exit 1
+		;;
+esac
+
+sockname=$2
+if [[ -z $sockname ]]; then
+	echo "$0: No socket was specified."
+	echo "Try '$0 --help' for more information."
+	exit 1
+fi
+
+shift 2
+
+while [[ $# -gt 1 ]]; do
+	case $1 in
+		-E)
+			dtattach_opts+=(-e '')
+			;;
+		-z)
+			dtattach_opts+=(-z)
+			;;
+		-e)
+			shift
+			if [[ $# -lt 1 ]]; then
+				echo "$0: No escape character specified."
+				echo "Try '$0 --help' for more information."
+				exit 1
+			fi
+			dtattach_opts+=(-e "$1")
+			;;
+		-r)
+			shift
+			if [[ $# -lt 1 ]]; then
+				echo "$0: No redraw method specified."
+				echo "Try '$0 --help' for more information."
+				exit 1
+			fi
+			dtmaster_opts+=(-r "$1")
+			dtattach_opts+=(-r "$1")
+			;;
+		-*)
+			echo "$0: Invalid option '$1'"
+			echo "Try '$0 --help' for more information."
+			exit 1
+			;;
+		*)
+			break
+			;;
+	esac
+	shift
+done
+
+case $mode in
+	N)
+		dtmaster_opts+=(-n)
+		;&
+	n)
+		dtmaster "$sockname" "${dtmaster_opts[@]}" "$@"
+		;;
+	A)
+		dtattach "$sockname" "${dtattach_opts[@]}" && exit 0
+		if [[ $? == 2 ]]; then
+			# Connection refused
+			rm "$sockname" || exit $?
+		fi
+		;&
+	c)
+		dtmaster "$sockname" "${dtmaster_opts[@]}" -w "$@" || exit $?
+		;&
+	a)
+		dtattach "$sockname" "${dtattach_opts[@]}"
+		;;
+esac
