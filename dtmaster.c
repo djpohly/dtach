@@ -541,7 +541,7 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 	}
 }
 
-int
+static int
 master_main(char **argv, int waitattach, int nofork)
 {
 	int fd[2] = {-1, -1};

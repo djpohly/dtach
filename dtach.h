@@ -127,8 +127,6 @@ struct packet
 /* This hopefully moves to the bottom of the screen */
 #define EOS "\033[999H"
 
-int attach_main(int noerror);
-
 #ifdef sun
 #define BROKEN_MASTER
 #endif

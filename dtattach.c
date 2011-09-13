@@ -177,7 +177,7 @@ process_kbd(int s, struct packet *pkt)
 	write(s, pkt, sizeof(struct packet));
 }
 
-int
+static int
 attach_main(int noerror)
 {
 	struct packet pkt;
