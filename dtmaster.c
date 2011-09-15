@@ -265,7 +265,7 @@ pty_activity(int s)
 
 	/* Error -> die */
 	if (len <= 0)
-		exit(1);
+		exit(errno != EIO);
 
 #ifdef BROKEN_MASTER
 	/* Get the current terminal settings. */
