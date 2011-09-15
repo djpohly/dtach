@@ -178,21 +178,19 @@ process_kbd(int s, struct packet *pkt)
 }
 
 static int
-attach_main(int noerror)
+attach_main()
 {
 	struct packet pkt;
 	unsigned char buf[BUFSIZE];
 	fd_set readfds;
 	int s;
 
-	/* Attempt to open the socket. Don't display an error if noerror is 
-	** set. */
+	/* Attempt to open the socket. */
 	s = connect_socket(sockname);
 	if (s < 0)
 	{
-		if (!noerror)
-			printf("%s: %s: %s\n", progname, sockname,
-				strerror(errno));
+		printf("%s: %s: %s\n", progname, sockname,
+			strerror(errno));
 		return (errno == ECONNREFUSED) ? 2 : 1;
 	}
 
@@ -416,5 +414,5 @@ main(int argc, char **argv)
 	if (tcgetattr(0, &orig_term) < 0)
 		memset(&orig_term, 0, sizeof(struct termios));
 
-	return attach_main(0);
+	return attach_main();
 }
