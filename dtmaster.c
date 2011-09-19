@@ -27,6 +27,8 @@ const char copyright[] =
 char *progname;
 /* The name of the passed in socket. */
 char *sockname;
+/* Flag to indicate that child process has terminated. */
+int stop;
 /* The default redraw method. If unspecified, use SIGWINCH. */
 int redraw_method = REDRAW_CTRL_L;
 
@@ -263,9 +265,15 @@ pty_activity(int s)
 	/* Read the pty activity */
 	len = read(the_pty.fd, buf, sizeof(buf));
 
-	/* Error -> die */
-	if (len <= 0)
-		exit(errno != EIO);
+	/* Error or zero read */
+	if (len < 0 && errno == EIO)
+	{
+		/* EIO can mean pty slave is closed, which is OK. */
+		stop = 1;
+		return;
+	}
+	else if (len <= 0)
+		exit(1);
 
 #ifdef BROKEN_MASTER
 	/* Get the current terminal settings. */
@@ -486,8 +494,9 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 	if (nullfd > 2)
 		close(nullfd);
 
-	/* Loop forever. */
-	while (1)
+	/* Loop until child terminates. */
+	stop = 0;
+	while (!stop)
 	{
 		/* Re-initialize the file descriptor set for select. */
 		FD_ZERO(&readfds);
