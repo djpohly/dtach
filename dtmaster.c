@@ -27,7 +27,7 @@ const char copyright[] =
 char *progname;
 /* The name of the passed in socket. */
 char *sockname;
-/* Flag to indicate that child process has terminated. */
+/* Flag to signal end of process. */
 int stop;
 /* The default redraw method. If unspecified, use SIGWINCH. */
 int redraw_method = REDRAW_CTRL_L;
@@ -116,7 +116,7 @@ die(int sig)
 #endif
 		return;
 	}
-	exit(1);
+	exit(128 + sig);
 }
 
 /* Sets a file descriptor to non-blocking mode. */
@@ -253,7 +253,7 @@ create_socket(char *name)
 
 /* Process activity on the pty - Input and terminal changes are sent out to
 ** the attached clients. If the pty goes away, we die. */
-static void
+static int
 pty_activity(int s)
 {
 	unsigned char buf[BUFSIZE];
@@ -270,19 +270,19 @@ pty_activity(int s)
 	{
 		/* EIO can mean pty slave is closed, which is OK. */
 		stop = 1;
-		return;
+		return 0;
 	}
 	else if (len <= 0)
-		exit(1);
+		return 1;
 
 #ifdef BROKEN_MASTER
 	/* Get the current terminal settings. */
 	if (tcgetattr(the_pty.slave, &the_pty.term) < 0)
-		exit(1);
+		return 1;
 #else
 	/* Get the current terminal settings. */
 	if (tcgetattr(the_pty.fd, &the_pty.term) < 0)
-		exit(1);
+		return 1;
 #endif
 
 top:
@@ -304,9 +304,10 @@ top:
 		nclients++;
 	}
 	if (nclients == 0)
-		return;
+		return 0;
+	/* XXX In what cases should this be fatal... */
 	if (select(highest_fd + 1, &readfds, &writefds, NULL, NULL) < 0)
-		return;
+		return 0;
 
 	/* Send the data out to the clients. */
 	for (p = clients, nclients = 0; p; p = p->next)
@@ -339,6 +340,7 @@ top:
 	/* Try again if nothing happened. */
 	if (!FD_ISSET(s, &readfds) && nclients == 0)
 		goto top;
+	return 0;
 }
 
 /* Process activity on the control socket */
@@ -447,7 +449,7 @@ client_activity(struct client *p)
 
 /* The master process - It watches over the pty process and the attached */
 /* clients. */
-static void
+static int
 master_process(int s, char **argv, int waitattach, int statusfd)
 {
 	struct client *p, *next;
@@ -478,7 +480,7 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 		if (statusfd != -1)
 			dup2(statusfd, 1);
 		printf("%s: init_pty: %s\n", progname, strerror(errno));
-		exit(1);
+		return 1;
 	}
 	
 	/* Close statusfd, since we don't need it anymore. */
@@ -494,7 +496,7 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 	if (nullfd > 2)
 		close(nullfd);
 
-	/* Loop until child terminates. */
+	/* Main loop. */
 	stop = 0;
 	while (!stop)
 	{
@@ -531,7 +533,7 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 		{
 			if (errno == EINTR || errno == EAGAIN)
 				continue;
-			exit(1);
+			return 1;
 		}
 
 		/* New client? */
@@ -546,8 +548,10 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 		}
 		/* pty activity? */
 		if (FD_ISSET(the_pty.fd, &readfds))
-			pty_activity(s);
+			if (pty_activity(s))
+				return 1;
 	}
+	return 0;
 }
 
 static int
@@ -628,8 +632,7 @@ master_main(char **argv, int waitattach, int nofork)
 	else /* Not forking, send status to stderr */
 		fd[1] = dup(2);
 
-	master_process(s, argv, waitattach, fd[1]);
-	return 0;
+	return master_process(s, argv, waitattach, fd[1]);
 }
 
 int
