@@ -71,7 +71,6 @@ usage()
 		"\t\t    winch: Send a WINCH signal to the program.\n"
 		"  -z\t\tDisable processing of the suspend key.\n"
 		"\nReport any bugs to <%s>.\n", PACKAGE_BUGREPORT);
-	exit(0);
 }
 
 /* Restores the original terminal settings. */
@@ -123,10 +122,13 @@ die(int sig)
 {
 	/* Print a nice pretty message for some things. */
 	if (sig == SIGHUP || sig == SIGINT)
+	{
 		printf(EOS "\r\n[detached]\r\n");
-	else
-		printf(EOS "\r\n[got signal %d - dying]\r\n", sig);
-	exit(1);
+		exit(0);
+	}
+
+	printf(EOS "\r\n[got signal %d - dying]\r\n", sig);
+	exit(128 + sig);
 }
 
 /* Window size change. */
@@ -251,7 +253,7 @@ attach_main()
 		if (n < 0 && errno != EINTR && errno != EAGAIN)
 		{
 			printf(EOS "\r\n[select failed]\r\n");
-			exit(1);
+			return 1;
 		}
 
 		/* Pty activity */
@@ -263,12 +265,12 @@ attach_main()
 			{
 				printf(EOS "\r\n[EOF - dtach terminating]"
 					"\r\n");
-				exit(0);
+				return 0;
 			}
 			else if (len < 0)
 			{
 				printf(EOS "\r\n[read returned an error]\r\n");
-				exit(1);
+				return 1;
 			}
 			/* Send the data to the terminal. */
 			write(1, buf, len);
@@ -282,7 +284,7 @@ attach_main()
 			pkt.len = read(0, pkt.u.buf, sizeof(pkt.u.buf));
 
 			if (pkt.len <= 0)
-				exit(1);
+				return 1;
 			process_kbd(s, &pkt);
 			n--;
 		}
