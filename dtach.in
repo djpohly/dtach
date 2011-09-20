@@ -109,16 +109,21 @@ case $mode in
 		dtmaster "$sockname" "${dtmaster_opts[@]}" "$@"
 		;;
 	A)
-		dtattach "$sockname" "${dtattach_opts[@]}" && exit 0
-		if [[ $? == 2 ]]; then
-			# Connection refused
-			rm "$sockname" || exit $?
-		fi
+		dtattach "$sockname" "${dtattach_opts[@]}"
+		rv=$?
+		tput cnorm
+		case $rv in
+			0) exit 0;;
+			2) rm "$sockname" || exit;;
+		esac
 		;&
 	c)
-		dtmaster "$sockname" "${dtmaster_opts[@]}" -w "$@" || exit $?
+		dtmaster "$sockname" "${dtmaster_opts[@]}" -w "$@" || exit
 		;&
 	a)
 		dtattach "$sockname" "${dtattach_opts[@]}"
+		rv=$?
+		tput cnorm
+		exit $?
 		;;
 esac
