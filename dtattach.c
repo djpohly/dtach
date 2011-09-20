@@ -119,11 +119,11 @@ die(int sig)
 	/* Print a nice pretty message for some things. */
 	if (sig == SIGHUP || sig == SIGINT)
 	{
-		printf(EOS "\r\n[detached]\r\n");
+		fprintf(stderr, "detached\n");
 		exit(0);
 	}
 
-	printf(EOS "\r\n[got signal %d - dying]\r\n", sig);
+	fprintf(stderr, "got signal %d\n", sig);
 	exit(128 + sig);
 }
 
@@ -148,7 +148,7 @@ process_kbd(int s, struct packet *pkt)
 
 		/* And suspend... */
 		tcsetattr(0, TCSADRAIN, &orig_term);
-		printf(EOS "\r\n");
+		printf("\r\n");
 		kill(getpid(), SIGTSTP);
 		tcsetattr(0, TCSADRAIN, &cur_term);
 
@@ -166,7 +166,7 @@ process_kbd(int s, struct packet *pkt)
 	/* Detach char? */
 	else if (pkt->u.buf[0] == detach_char)
 	{
-		printf(EOS "\r\n[detached]\r\n");
+		fprintf(stderr, "detached\n");
 		stop = 1;
 		return;
 	}
@@ -190,7 +190,7 @@ attach_main()
 	s = connect_socket(sockname);
 	if (s < 0)
 	{
-		printf("%s: %s: %s\n", progname, sockname,
+		fprintf(stderr, "%s: %s: %s\n", progname, sockname,
 			strerror(errno));
 		return (errno == ECONNREFUSED) ? 2 : 1;
 	}
@@ -223,9 +223,6 @@ attach_main()
 	cur_term.c_cc[VTIME] = 0;
 	tcsetattr(0, TCSADRAIN, &cur_term);
 
-	/* Clear the screen. This assumes VT100. */
-	write(1, "\33[H\33[J", 6);
-
 	/* Tell the master that we want to attach. */
 	pkt.type = MSG_ATTACH;
 	write(s, &pkt, sizeof(struct packet));
@@ -248,7 +245,7 @@ attach_main()
 		n = select(s + 1, &readfds, NULL, NULL, NULL);
 		if (n < 0 && errno != EINTR && errno != EAGAIN)
 		{
-			printf(EOS "\r\n[select failed]\r\n");
+			fprintf(stderr, "select failed\n");
 			return 1;
 		}
 
@@ -259,13 +256,12 @@ attach_main()
 
 			if (len == 0)
 			{
-				printf(EOS "\r\n[EOF - dtach terminating]"
-					"\r\n");
+				fprintf(stderr, "EOF - dtach terminating\n");
 				return 0;
 			}
 			else if (len < 0)
 			{
-				printf(EOS "\r\n[read returned an error]\r\n");
+				fprintf(stderr, "read returned an error\n");
 				return 1;
 			}
 			/* Send the data to the terminal. */
@@ -310,8 +306,8 @@ main(int argc, char **argv)
 	/* Parse the arguments */
 	if (argc < 1)
 	{
-		printf("%s: No socket was specified.\n", progname);
-		printf("Try '%s --help' for more information.\n",
+		fprintf(stderr, "%s: No socket was specified.\n", progname);
+		fprintf(stderr, "Try '%s --help' for more information.\n",
 			progname);
 		return 1;
 	}
@@ -342,10 +338,12 @@ main(int argc, char **argv)
 				++argv; --argc;
 				if (argc < 1)
 				{
-					printf("%s: No escape character "
-						"specified.\n", progname);	
-					printf("Try '%s --help' for more "
-						"information.\n", progname);
+					fprintf(stderr, "%s: No escape "
+						"character specified.\n",
+						progname);	
+					fprintf(stderr, "Try '%s --help' for "
+						"more information.\n",
+						progname);
 					return 1;
 				}
 				if (argv[0][0] == '^' && argv[0][1])
@@ -366,10 +364,11 @@ main(int argc, char **argv)
 				++argv; --argc;
 				if (argc < 1)
 				{
-					printf("%s: No redraw method "
+					fprintf(stderr, "%s: No redraw method "
 						"specified.\n", progname);	
-					printf("Try '%s --help' for more "
-						"information.\n", progname);
+					fprintf(stderr, "Try '%s --help' for "
+						"more information.\n",
+						progname);
 					return 1;
 				}
 				if (strcmp(argv[0], "none") == 0)
@@ -380,10 +379,12 @@ main(int argc, char **argv)
 					redraw_method = REDRAW_WINCH;
 				else
 				{
-					printf("%s: Invalid redraw method "
-						"specified.\n", progname);	
-					printf("Try '%s --help' for more "
-						"information.\n", progname);
+					fprintf(stderr, "%s: Invalid redraw "
+						"method specified.\n",
+						progname);
+					fprintf(stderr, "Try '%s --help' for "
+						"more information.\n",
+						progname);
 					return 1;
 				}
 				break;
@@ -395,10 +396,10 @@ main(int argc, char **argv)
 			}
 			else
 			{
-				printf("%s: Invalid option '-%c'\n",
+				fprintf(stderr, "%s: Invalid option '-%c'\n",
 					progname, *p);
-				printf("Try '%s --help' for more information.\n",
-					progname);
+				fprintf(stderr, "Try '%s --help' for more "
+					"information.\n", progname);
 				return 1;
 			}
 		}
@@ -407,9 +408,9 @@ main(int argc, char **argv)
 
 	if (argc > 0)
 	{
-		printf("%s: Invalid number of arguments.\n",
+		fprintf(stderr, "%s: Invalid number of arguments.\n",
 			progname);
-		printf("Try '%s --help' for more information.\n",
+		fprintf(stderr, "Try '%s --help' for more information.\n",
 			progname);
 		return 1;
 	}

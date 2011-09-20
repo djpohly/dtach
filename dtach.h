@@ -124,9 +124,6 @@ struct packet
 */
 #define BUFSIZE 4096
 
-/* This hopefully moves to the bottom of the screen */
-#define EOS "\033[999H"
-
 #ifdef sun
 #define BROKEN_MASTER
 #endif

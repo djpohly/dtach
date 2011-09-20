@@ -101,6 +101,8 @@ while [[ $# -gt 1 ]]; do
 	shift
 done
 
+# XXX Print error using tput cup `tput lines` || tput ll
+exec 3>&1
 case $mode in
 	N)
 		dtmaster_opts+=(-n)
@@ -109,11 +111,16 @@ case $mode in
 		dtmaster "$sockname" "${dtmaster_opts[@]}" "$@"
 		;;
 	A)
-		dtattach "$sockname" "${dtattach_opts[@]}"
+		clear
+		err=$(dtattach "$sockname" "${dtattach_opts[@]}" 2>&1 1>&3 3>&-)
 		rv=$?
 		tput cnorm
 		case $rv in
-			0) exit 0;;
+			0)
+				tput cup `tput lines` || tput ll
+				echo "[$err]"
+				exit 0
+				;;
 			2) rm "$sockname" || exit;;
 		esac
 		;&
@@ -121,8 +128,11 @@ case $mode in
 		dtmaster "$sockname" "${dtmaster_opts[@]}" -w "$@" || exit
 		;&
 	a)
-		dtattach "$sockname" "${dtattach_opts[@]}"
+		clear
+		err=$(dtattach "$sockname" "${dtattach_opts[@]}" 2>&1 1>&3 3>&-)
 		rv=$?
+		tput cup `tput lines` || tput ll
+		echo "[$err]"
 		tput cnorm
 		exit $?
 		;;

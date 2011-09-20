@@ -167,9 +167,9 @@ init_pty(char **argv, int statusfd)
 		if (statusfd != -1)
 			dup2(statusfd, 1);
 		else
-			printf(EOS "\r\n");
+			fprintf(stderr, "\r\n");
 
-		printf("%s: could not execute %s: %s\r\n", progname,
+		fprintf(stderr, "%s: could not execute %s: %s\r\n", progname,
 		       *argv, strerror(errno));
 		fflush(stdout);
 		_exit(127);
@@ -479,7 +479,8 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 	{
 		if (statusfd != -1)
 			dup2(statusfd, 1);
-		printf("%s: init_pty: %s\n", progname, strerror(errno));
+		fprintf(stderr, "%s: init_pty: %s\n", progname,
+			strerror(errno));
 		return 1;
 	}
 	
@@ -569,7 +570,8 @@ master_main(char **argv, int waitattach, int nofork)
 	s = create_socket(sockname);
 	if (s < 0)
 	{
-		printf("%s: %s: %s\n", progname, sockname, strerror(errno));
+		fprintf(stderr, "%s: %s: %s\n", progname, sockname,
+			strerror(errno));
 		return 1;
 	}
 
@@ -596,7 +598,8 @@ master_main(char **argv, int waitattach, int nofork)
 		pid = fork();
 		if (pid < 0)
 		{
-			printf("%s: fork: %s\n", progname, strerror(errno));
+			fprintf(stderr, "%s: fork: %s\n", progname,
+				strerror(errno));
 			unlink_socket();
 			return 1;
 		}
@@ -648,8 +651,8 @@ main(int argc, char **argv)
 	/* Parse the arguments */
 	if (argc < 1)
 	{
-		printf("%s: No socket was specified.\n", progname);
-		printf("Try '%s --help' for more information.\n",
+		fprintf(stderr, "%s: No socket was specified.\n", progname);
+		fprintf(stderr, "Try '%s --help' for more information.\n",
 			progname);
 		return 1;
 	}
@@ -682,10 +685,11 @@ main(int argc, char **argv)
 				++argv; --argc;
 				if (argc < 1)
 				{
-					printf("%s: No redraw method "
+					fprintf(stderr, "%s: No redraw method "
 						"specified.\n", progname);	
-					printf("Try '%s --help' for more "
-						"information.\n", progname);
+					fprintf(stderr, "Try '%s --help' for "
+						"more information.\n",
+						progname);
 					return 1;
 				}
 				if (strcmp(argv[0], "none") == 0)
@@ -696,10 +700,12 @@ main(int argc, char **argv)
 					redraw_method = REDRAW_WINCH;
 				else
 				{
-					printf("%s: Invalid redraw method "
-						"specified.\n", progname);	
-					printf("Try '%s --help' for more "
-						"information.\n", progname);
+					fprintf(stderr, "%s: Invalid redraw "
+						"method specified.\n",
+						progname);
+					fprintf(stderr, "Try '%s --help' for "
+						"more information.\n",
+						progname);
 					return 1;
 				}
 				break;
@@ -711,10 +717,10 @@ main(int argc, char **argv)
 			}
 			else
 			{
-				printf("%s: Invalid option '-%c'\n",
+				fprintf(stderr, "%s: Invalid option '-%c'\n",
 					progname, *p);
-				printf("Try '%s --help' for more information.\n",
-					progname);
+				fprintf(stderr, "Try '%s --help' for more "
+					"information.\n", progname);
 				return 1;
 			}
 		}
@@ -723,8 +729,8 @@ main(int argc, char **argv)
 
 	if (argc < 1)
 	{
-		printf("%s: No command was specified.\n", progname);
-		printf("Try '%s --help' for more information.\n",
+		fprintf(stderr, "%s: No command was specified.\n", progname);
+		fprintf(stderr, "Try '%s --help' for more information.\n",
 			progname);
 		return 1;
 	}
