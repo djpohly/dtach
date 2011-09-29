@@ -131,7 +131,6 @@ die(int sig)
 static RETSIGTYPE
 win_change()
 {
-	signal(SIGWINCH, win_change);
 	win_changed = 1;
 }
 
@@ -203,13 +202,22 @@ attach_main()
 	atexit(restore_term);
 
 	/* Set some signals. */
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGXFSZ, SIG_IGN);
-	signal(SIGHUP, die);
-	signal(SIGTERM, die);
-	signal(SIGINT, die);
-	signal(SIGQUIT, die);
-	signal(SIGWINCH, win_change);
+	struct sigaction sa;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &sa, NULL);
+	sigaction(SIGXFSZ, &sa, NULL);
+
+	sa.sa_handler = die;
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
+
+	sa.sa_handler = win_change;
+	sigaction(SIGWINCH, &sa, NULL);
 
 	/* Set raw mode. */
 	cur_term.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL);

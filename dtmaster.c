@@ -465,14 +465,22 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 	atexit(unlink_socket);
 
 	/* Set up some signals. */
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGXFSZ, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGINT, die);
-	signal(SIGTERM, die);
-	signal(SIGCHLD, die);
+	struct sigaction sa;
+	sa.sa_flags = SA_NOCLDSTOP;
+	sigemptyset(&sa.sa_mask);
+
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &sa, NULL);
+	sigaction(SIGXFSZ, &sa, NULL);
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGTTIN, &sa, NULL);
+	sigaction(SIGTTOU, &sa, NULL);
+
+	sa.sa_handler = die;
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGCHLD, &sa, NULL);
+
 
 	/* Create a pty in which the process is running. */
 	if (init_pty(argv, statusfd) < 0)
