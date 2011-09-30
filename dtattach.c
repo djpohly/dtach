@@ -201,10 +201,21 @@ attach_main()
 	/* Set a trap to restore the terminal when we die. */
 	atexit(restore_term);
 
-	/* Set some signals. */
+	/* Mask out our signals. */
+	sigset_t sigs;
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGHUP);
+	sigaddset(&sigs, SIGTERM);
+	sigaddset(&sigs, SIGINT);
+	sigaddset(&sigs, SIGQUIT);
+	sigaddset(&sigs, SIGWINCH);
+	sigprocmask(SIG_SETMASK, &sigs, NULL);
+	sigemptyset(&sigs);
+
+	/* Register signal handlers. */
 	struct sigaction sa;
 	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
+	sa.sa_mask = sigs;
 
 	sa.sa_handler = SIG_IGN;
 	sigaction(SIGPIPE, &sa, NULL);
@@ -250,7 +261,7 @@ attach_main()
 		FD_ZERO(&readfds);
 		FD_SET(0, &readfds);
 		FD_SET(s, &readfds);
-		n = select(s + 1, &readfds, NULL, NULL, NULL);
+		n = pselect(s + 1, &readfds, NULL, NULL, NULL, &sigs);
 		if (n < 0 && errno != EINTR && errno != EAGAIN)
 		{
 			fprintf(stderr, "select failed\n");
