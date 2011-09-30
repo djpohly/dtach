@@ -117,14 +117,14 @@ static RETSIGTYPE
 die(int sig)
 {
 	/* Print a nice pretty message for some things. */
-	if (sig == SIGHUP || sig == SIGINT)
+	if (sig != SIGHUP && sig != SIGINT)
 	{
-		fprintf(stderr, "detached\n");
-		exit(0);
+		fprintf(stderr, "got signal %d\n", sig);
+		exit(128 + sig);
 	}
 
-	fprintf(stderr, "got signal %d\n", sig);
-	exit(128 + sig);
+	fprintf(stderr, "detached\n");
+	stop = 1;
 }
 
 /* Window size change. */
