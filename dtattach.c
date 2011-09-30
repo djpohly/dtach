@@ -119,11 +119,11 @@ die(int sig)
 	/* Print a nice pretty message for some things. */
 	if (sig != SIGHUP && sig != SIGINT)
 	{
-		fprintf(stderr, "got signal %d\n", sig);
+		fprintf(stderr, "got signal %d\r\n", sig);
 		exit(128 + sig);
 	}
 
-	fprintf(stderr, "detached\n");
+	fprintf(stderr, "detached\r\n");
 	stop = 1;
 }
 
@@ -165,7 +165,7 @@ process_kbd(int s, struct packet *pkt)
 	/* Detach char? */
 	else if (pkt->u.buf[0] == detach_char)
 	{
-		fprintf(stderr, "detached\n");
+		fprintf(stderr, "detached\r\n");
 		stop = 1;
 		return;
 	}
@@ -189,7 +189,7 @@ attach_main()
 	s = connect_socket(sockname);
 	if (s < 0)
 	{
-		fprintf(stderr, "%s: %s: %s\n", progname, sockname,
+		fprintf(stderr, "%s: %s: %s\r\n", progname, sockname,
 			strerror(errno));
 		return (errno == ECONNREFUSED) ? 2 : 1;
 	}
@@ -264,7 +264,7 @@ attach_main()
 		n = pselect(s + 1, &readfds, NULL, NULL, NULL, &sigs);
 		if (n < 0 && errno != EINTR && errno != EAGAIN)
 		{
-			fprintf(stderr, "select failed\n");
+			fprintf(stderr, "select failed\r\n");
 			return 1;
 		}
 
@@ -275,12 +275,12 @@ attach_main()
 
 			if (len == 0)
 			{
-				fprintf(stderr, "EOF - dtach terminating\n");
+				fprintf(stderr, "EOF - dtach terminating\r\n");
 				return 0;
 			}
 			else if (len < 0)
 			{
-				fprintf(stderr, "read returned an error\n");
+				fprintf(stderr, "read returned an error\r\n");
 				return 1;
 			}
 			/* Send the data to the terminal. */
