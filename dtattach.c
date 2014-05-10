@@ -243,6 +243,7 @@ attach_main()
 	tcsetattr(0, TCSADRAIN, &cur_term);
 
 	/* Tell the master that we want to attach. */
+	memset(&pkt, 0, sizeof(struct packet));
 	pkt.type = MSG_ATTACH;
 	write(s, &pkt, sizeof(struct packet));
 
