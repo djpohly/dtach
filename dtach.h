@@ -127,6 +127,8 @@ struct packet
 */
 #define BUFSIZE 4096
 
+void init_sockaddr_un(struct sockaddr_un *sockun, char *name);
+
 #ifdef sun
 #define BROKEN_MASTER
 #endif

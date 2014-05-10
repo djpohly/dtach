@@ -90,8 +90,7 @@ connect_socket(char *name)
 	s = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (s < 0)
 		return -1;
-	sockun.sun_family = AF_UNIX;
-	strcpy(sockun.sun_path, name);
+	init_sockaddr_un(&sockun, name);
 	if (connect(s, (struct sockaddr*)&sockun, sizeof(sockun)) < 0)
 	{
 		close(s);
