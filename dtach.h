@@ -19,6 +19,8 @@
 #ifndef dtach_h
 #define dtach_h
 
+#define _POSIX_C_SOURCE 200112L
+
 #include <config.h>
 
 #include <errno.h>
@@ -68,6 +70,7 @@
 #endif
 
 #include <termios.h>
+#include <sys/types.h>
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
