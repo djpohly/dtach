@@ -25,6 +25,7 @@ AC_HEADER_TIME
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_PID_T
+AC_TYPE_SSIZE_T
 
 # Checks for library functions.
 AC_TYPE_SIGNAL
