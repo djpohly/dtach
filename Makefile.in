@@ -29,6 +29,6 @@ tar:
 	gzip -9f dtach-$(VERSION).tar
 	rm -rf dtach-$(VERSION)
 
-dtattach: @srcdir@/dtattach.c @srcdir@/dtach.h config.h
-dtmaster: @srcdir@/dtmaster.c @srcdir@/dtach.h config.h
+dtattach: @srcdir@/dtattach.c @srcdir@/dtach.h @srcdir@/dtach.c config.h
+dtmaster: @srcdir@/dtmaster.c @srcdir@/dtach.h @srcdir@/dtach.c config.h
 
