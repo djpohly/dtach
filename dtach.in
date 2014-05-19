@@ -30,6 +30,14 @@ Report any bugs to <@PACKAGE_BUGREPORT@>.
 _EOF_
 }
 
+version()
+{
+	cat << _EOF_
+dtach - version @PACKAGE_VERSION@, compiled on @BUILD_DATE@.
+ (C) Copyright 2004-2014 Ned T. Crigler, modified by Devin J. Pohly
+_EOF_
+}
+
 declare mode= sockname= rv=
 declare -a dtmaster_opts=() dtattach_opts=()
 
@@ -39,8 +47,7 @@ case $1 in
 		exit 0
 		;;
 	--version)
-		echo "dtach - version @PACKAGE_VERSION@, compiled on @BUILD_DATE@."
-		echo " (C) Copyright 2004-2008 Ned T. Crigler, 2011 Devin J. Pohly"
+		version
 		exit 0
 		;;
 	-[acnAN])
