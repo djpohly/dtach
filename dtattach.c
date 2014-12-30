@@ -254,9 +254,19 @@ attach_main()
 
 	/* Wait for things to happen */
 	stop = 0;
-	while (1)
+	while (!stop)
 	{
 		int n;
+
+		/* Window size changed? */
+		if (win_changed)
+		{
+			win_changed = 0;
+
+			pkt.type = MSG_WINCH;
+			ioctl(0, TIOCGWINSZ, &pkt.u.ws);
+			write(s, &pkt, sizeof(pkt));
+		}
 
 		FD_ZERO(&readfds);
 		FD_SET(0, &readfds);
@@ -302,18 +312,6 @@ attach_main()
 			pkt.len = len;
 			process_kbd(s, &pkt);
 			n--;
-		}
-		if (stop)
-			break;
-
-		/* Window size changed? */
-		if (win_changed)
-		{
-			win_changed = 0;
-
-			pkt.type = MSG_WINCH;
-			ioctl(0, TIOCGWINSZ, &pkt.u.ws);
-			write(s, &pkt, sizeof(pkt));
 		}
 	}
 	return 0;
