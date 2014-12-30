@@ -7,8 +7,8 @@ VERSION = @PACKAGE_VERSION@
 VPATH = $(srcdir)
 
 BIN = dtattach dtmaster
-OBJ = dtach.o
-SRC = $(srcdir)/dtattach.c $(srcdir)/dtmaster.c
+OBJ = dtach.o parser.o
+SRC = $(srcdir)/dtattach.c $(srcdir)/dtmaster.c $(srcdir)/parser.c
 
 TARFILES = $(srcdir)/README $(srcdir)/COPYING $(srcdir)/Makefile.in \
 	   $(srcdir)/config.h.in $(SRC) \

@@ -36,24 +36,6 @@ int redraw_method = REDRAW_CTRL_L;
 struct termios orig_term;
 int dont_have_tty;
 
-/* The pty struct - The pty information is stored here. */
-struct pty
-{
-	/* File descriptor of the pty */
-	int fd;
-#ifdef BROKEN_MASTER
-	/* File descriptor of the slave side of the pty. For broken systems. */
-	int slave;
-#endif
-	/* Process id of the child. */
-	pid_t pid;
-	/* The terminal parameters of the pty. Old and new for comparision
-	** purposes. */
-	struct termios term;
-	/* The current window size of the pty. */
-	struct winsize ws;
-};
-
 /* A connected client */
 struct client
 {
@@ -255,23 +237,24 @@ create_socket(char *name)
 static int
 pty_activity(int s)
 {
-	unsigned char buf[BUFSIZE];
-	ssize_t len;
+	ssize_t len, rlen;
 	struct client *p;
 	fd_set readfds, writefds;
 	int highest_fd, nclients;
+	unsigned int rem;
 
 	/* Read the pty activity */
-	len = read(the_pty.fd, buf, sizeof(buf));
+	rlen = read(the_pty.fd, the_pty.buf + the_pty.leftover,
+			sizeof(the_pty.buf) - the_pty.leftover);
 
 	/* Error or zero read */
-	if (len < 0 && errno == EIO)
+	if (rlen < 0 && errno == EIO)
 	{
 		/* EIO can mean pty slave is closed, which is OK. */
 		stop = 1;
 		return 0;
 	}
-	else if (len <= 0)
+	else if (rlen <= 0)
 		return 1;
 
 #ifdef BROKEN_MASTER
@@ -283,6 +266,8 @@ pty_activity(int s)
 	if (tcgetattr(the_pty.fd, &the_pty.term) < 0)
 		return 1;
 #endif
+
+	len = parse_buf(&the_pty, rlen, &rem);
 
 top:
 	/*
@@ -319,7 +304,8 @@ top:
 		written = 0;
 		while (written < len)
 		{
-			ssize_t n = write(p->fd, buf + written, len - written);
+			ssize_t n = write(p->fd, the_pty.buf + written,
+					len - written);
 
 			if (n > 0)
 			{
@@ -339,6 +325,9 @@ top:
 	/* Try again if nothing happened. */
 	if (!FD_ISSET(s, &readfds) && nclients == 0)
 		goto top;
+	/* Move any leftover bytes to the front of the buffer */
+	memmove(the_pty.buf, the_pty.buf + the_pty.leftover + rlen - rem, rem);
+	the_pty.leftover = rem;
 	return 0;
 }
 
@@ -368,6 +357,8 @@ control_activity(int s)
 	if (p->next)
 		p->next->pprev = &p->next;
 	*(p->pprev) = p;
+
+	restore_state(&the_pty, fd);
 }
 
 /* Process activity from a client. */
@@ -492,6 +483,14 @@ master_process(int s, char **argv, int waitattach, int nofork, int statusfd)
 			dup2(statusfd, 1);
 		fprintf(stderr, "%s: init_pty: %s\n", progname,
 			strerror(errno));
+		return 1;
+	}
+
+	if (parser_init(&the_pty))
+	{
+		if (statusfd != -1)
+			dup2(statusfd, 1);
+		printf("%s: parser_init failed\n", progname);
 		return 1;
 	}
 	

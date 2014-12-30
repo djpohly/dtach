@@ -130,4 +130,33 @@ void init_sockaddr_un(struct sockaddr_un *sockun, char *name);
 #ifdef sun
 #define BROKEN_MASTER
 #endif
+
+/* The pty struct - The pty information is stored here. */
+struct pty
+{
+	/* File descriptor of the pty */
+	int fd;
+#ifdef BROKEN_MASTER
+	/* File descriptor of the slave side of the pty. For broken systems. */
+	int slave;
+#endif
+	/* Process id of the child. */
+	pid_t pid;
+	/* The terminal parameters of the pty. Old and new for comparision
+	** purposes. */
+	struct termios term;
+	/* The current window size of the pty. */
+	struct winsize ws;
+	/* Buffer for I/O. */
+	char buf[BUFSIZE];
+	/* Number of characters left in buffer. */
+	int leftover;
+	/* Keypad mode */
+	int smkx;
+};
+
+int parser_init(struct pty *p);
+int parse_buf(struct pty *p, unsigned int count, unsigned int *rem);
+int restore_state(struct pty *p, int fd);
+
 #endif

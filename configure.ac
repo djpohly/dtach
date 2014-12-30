@@ -15,6 +15,7 @@ fi
 # Checks for libraries.
 AC_CHECK_LIB(util, openpty)
 AC_CHECK_LIB(socket, socket)
+AC_SEARCH_LIBS(tigetstr, ncurses curses)
 
 # Checks for header files.
 AC_CHECK_HEADERS(fcntl.h sys/select.h sys/socket.h sys/time.h)
