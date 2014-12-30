@@ -19,8 +19,6 @@
 #ifndef dtach_h
 #define dtach_h
 
-#define _POSIX_C_SOURCE 200112L
-
 #include <config.h>
 
 #include <errno.h>
