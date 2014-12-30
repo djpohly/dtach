@@ -7,6 +7,7 @@ VERSION = @PACKAGE_VERSION@
 VPATH = $(srcdir)
 
 BIN = dtattach dtmaster
+OBJ = dtach.o
 SRC = $(srcdir)/dtattach.c $(srcdir)/dtmaster.c
 
 TARFILES = $(srcdir)/README $(srcdir)/COPYING $(srcdir)/Makefile.in \
@@ -17,7 +18,7 @@ TARFILES = $(srcdir)/README $(srcdir)/COPYING $(srcdir)/Makefile.in \
 all: $(BIN)
 
 clean:
-	rm -f $(BIN) dtach-$(VERSION).tar.gz
+	rm -f $(BIN) $(OBJ) dtach-$(VERSION).tar.gz
 
 distclean: clean
 	rm -f @ac_config_files@ config.h config.log config.status config.cache
@@ -29,6 +30,6 @@ tar:
 	gzip -9f dtach-$(VERSION).tar
 	rm -rf dtach-$(VERSION)
 
-dtattach: @srcdir@/dtattach.c @srcdir@/dtach.h @srcdir@/dtach.c config.h
-dtmaster: @srcdir@/dtmaster.c @srcdir@/dtach.h @srcdir@/dtach.c config.h
+$(BIN) $(OBJ): $(srcdir)/dtach.h
+$(BIN): $(OBJ)
 
