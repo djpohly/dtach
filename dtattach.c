@@ -35,8 +35,8 @@ const char copyright[] =
 char *progname;
 /* The name of the passed in socket. */
 char *sockname;
-/* Flag to signal end of process. */
-int stop;
+/* Flag to signal detachment. */
+int attached;
 /* The character used for detaching. Defaults to '^\' */
 int detach_char = '\\' - 64;
 /* 1 if we should not interpret the suspend character. */
@@ -123,7 +123,7 @@ die(int sig)
 	}
 
 	fprintf(stderr, "detached\r\n");
-	stop = 1;
+	attached = 0;
 }
 
 /* Window size change. */
@@ -165,7 +165,7 @@ process_kbd(int s, struct packet *pkt)
 	else if (pkt->u.buf[0] == detach_char)
 	{
 		fprintf(stderr, "detached\r\n");
-		stop = 1;
+		attached = 0;
 		return;
 	}
 	/* Just in case something pukes out. */
@@ -253,8 +253,8 @@ attach_main()
 	write(s, &pkt, sizeof(struct packet));
 
 	/* Wait for things to happen */
-	stop = 0;
-	while (!stop)
+	attached = 1;
+	while (attached)
 	{
 		int n;
 
