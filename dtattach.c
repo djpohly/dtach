@@ -306,7 +306,10 @@ attach_main()
 			memset(pkt.u.buf, 0, sizeof(pkt.u.buf));
 			len = read(0, pkt.u.buf, sizeof(pkt.u.buf));
 
-			if (len <= 0)
+			/* Detach on EOF from stdin */
+			if (len == 0)
+				break;
+			else if (len < 0)
 				return 1;
 
 			pkt.len = len;
