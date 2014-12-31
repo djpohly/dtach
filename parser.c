@@ -10,6 +10,8 @@ enum
 	MATCH_DELETE = 0,
 	MATCH_SMKX = 1,
 	MATCH_RMKX = 2,
+	MATCH_SMCUP = 3,
+	MATCH_RMCUP = 4,
 };
 
 struct needle
@@ -62,18 +64,16 @@ static struct needle ans0 = {
 	.action = MATCH_DELETE,
 };
 static struct needle smkx = {
-	.next = NULL,
-	.str = NULL,
-	.table = NULL,
-	.j = 0,
 	.action = MATCH_SMKX,
 };
 static struct needle rmkx = {
-	.next = NULL,
-	.str = NULL,
-	.table = NULL,
-	.j = 0,
 	.action = MATCH_RMKX,
+};
+static struct needle smcup = {
+	.action = MATCH_SMCUP,
+};
+static struct needle rmcup = {
+	.action = MATCH_RMCUP,
 };
 
 static struct needle *pincushion = &ans0, *pctail = &ans4;
@@ -123,6 +123,26 @@ int parser_init(struct pty *p)
 		kmp_setup(&rmkx);
 		pctail->next = &rmkx;
 		pctail = &rmkx;
+	}
+	smcup.str = tigetstr("smcup");
+	if (smcup.str)
+	{
+		smcup.table = malloc(strlen(smcup.str) * sizeof (int));
+		if (!smcup.table)
+			return 1;
+		kmp_setup(&smcup);
+		pctail->next = &smcup;
+		pctail = &smcup;
+	}
+	rmcup.str = tigetstr("rmcup");
+	if (rmcup.str)
+	{
+		rmcup.table = malloc(strlen(rmcup.str) * sizeof (int));
+		if (!rmcup.table)
+			return 1;
+		kmp_setup(&rmcup);
+		pctail->next = &rmcup;
+		pctail = &rmcup;
 	}
 	return 0;
 }
@@ -191,6 +211,12 @@ int parse_buf(struct pty *p, unsigned int count, unsigned int *rem)
 			case MATCH_RMKX:
 				p->smkx = 0;
 				break;
+			case MATCH_SMCUP:
+				p->smcup = 1;
+				break;
+			case MATCH_RMCUP:
+				p->smcup = 0;
+				break;
 		}
 		if (c > 0)
 			memmove(end, next, c);
@@ -221,6 +247,23 @@ int restore_state(struct pty *p, int fd)
 {
 	int len, written, n;
 
+	if (p->smcup)
+	{
+		len = strlen(smcup.str);
+		n = 0;
+		for (written = 0; written < len; written += n)
+		{
+			n = write(fd, smcup.str + written, len - written);
+			if (n <= 0)
+			{
+				if (n == 0 || errno == EAGAIN)
+					break;
+				if (errno != EINTR)
+					return errno;
+				n = 0;
+			}
+		}
+	}
 	if (p->smkx)
 	{
 		len = strlen(smkx.str);

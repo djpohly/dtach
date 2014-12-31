@@ -153,6 +153,8 @@ struct pty
 	int leftover;
 	/* Keypad mode */
 	int smkx;
+	/* Alternate screen mode */
+	int smcup;
 };
 
 int parser_init(struct pty *p);
