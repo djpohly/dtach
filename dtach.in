@@ -119,7 +119,6 @@ case $mode in
 		clear
 		dtattach "$sockname" "${dtattach_opts[@]}"
 		rv=$?
-		tput cnorm
 		case $rv in
 			0)
 				tput cup `tput lines` || tput ll
@@ -141,7 +140,6 @@ case $mode in
 		clear
 		dtattach "$sockname" "${dtattach_opts[@]}"
 		rv=$?
-		tput cnorm
 		case $rv in
 			0)
 				tput cup `tput lines` || tput ll
