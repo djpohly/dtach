@@ -283,3 +283,47 @@ int restore_state(struct pty *p, int fd)
 	}
 	return 0;
 }
+
+/*
+** Resets the state of a pty by replaying control sequences to the given fd.
+*/
+int reset_state(struct pty *p, int fd)
+{
+	int len, written, n;
+
+	if (p->smkx)
+	{
+		len = strlen(rmkx.str);
+		n = 0;
+		for (written = 0; written < len; written += n)
+		{
+			n = write(fd, rmkx.str + written, len - written);
+			if (n <= 0)
+			{
+				if (n == 0 || errno == EAGAIN)
+					break;
+				if (errno != EINTR)
+					return errno;
+				n = 0;
+			}
+		}
+	}
+	if (p->smcup)
+	{
+		len = strlen(rmcup.str);
+		n = 0;
+		for (written = 0; written < len; written += n)
+		{
+			n = write(fd, rmcup.str + written, len - written);
+			if (n <= 0)
+			{
+				if (n == 0 || errno == EAGAIN)
+					break;
+				if (errno != EINTR)
+					return errno;
+				n = 0;
+			}
+		}
+	}
+	return 0;
+}
