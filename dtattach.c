@@ -122,7 +122,6 @@ die(int sig)
 		exit(128 + sig);
 	}
 
-	fprintf(stderr, "detached\r\n");
 	attached = 0;
 }
 
@@ -164,7 +163,6 @@ process_kbd(int s, struct packet *pkt)
 	/* Detach char? */
 	else if (pkt->u.buf[0] == detach_char)
 	{
-		fprintf(stderr, "detached\r\n");
 		attached = 0;
 		return;
 	}
@@ -284,10 +282,7 @@ attach_main()
 			ssize_t len = read(s, buf, sizeof(buf));
 
 			if (len == 0)
-			{
-				fprintf(stderr, "EOF - dtach terminating\r\n");
 				return 3;
-			}
 			else if (len < 0)
 			{
 				fprintf(stderr, "read returned an error\r\n");
