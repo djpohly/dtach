@@ -286,7 +286,7 @@ attach_main()
 			if (len == 0)
 			{
 				fprintf(stderr, "EOF - dtach terminating\r\n");
-				return 0;
+				return 3;
 			}
 			else if (len < 0)
 			{
