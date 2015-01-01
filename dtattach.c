@@ -146,7 +146,7 @@ process_kbd(int s, struct packet *pkt)
 		/* And suspend... */
 		tcsetattr(0, TCSADRAIN, &orig_term);
 		printf("\r\n");
-		kill(getpid(), SIGTSTP);
+		raise(SIGTSTP);
 		tcsetattr(0, TCSADRAIN, &cur_term);
 
 		/* Tell the master that we are returning. */
