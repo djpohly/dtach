@@ -1,0 +1,7 @@
+have the master output rmkx/rmcup on MSG_DETACH if needed
+- problem: client needs to be the one to close connection, because MSG_DETACH
+  and MSG_ATTACH are also used when suspending, so the master must leave the
+  connection open
+- so there needs to be some way to tell or guess when the master is done
+  sending (or doesn't need to send) the rmkx/rmcup strings, e.g. change to the
+  protocol :(
