@@ -312,6 +312,44 @@ attach_main()
 			n--;
 		}
 	}
+
+	/* Tell the master that we are detaching. */
+	pkt.type = MSG_DETACH;
+	write(s, &pkt, sizeof(struct packet));
+
+	/* Wait up to 0.5s for it to respond. */
+	for (;;) {
+		int n;
+
+		FD_ZERO(&readfds);
+		FD_SET(s, &readfds);
+		struct timespec timeout = { .tv_nsec = 500000000 };
+		n = pselect(s + 1, &readfds, NULL, NULL, &timeout, &sigs);
+		if (n < 0 && errno != EINTR && errno != EAGAIN) {
+			fprintf(stderr, "select failed\r\n");
+			return 1;
+		}
+		/* Timeout - old masters don't send final data, so we're done */
+		if (n == 0)
+			break;
+		/* Final data from master */
+		if (n > 0 && FD_ISSET(s, &readfds)) {
+			ssize_t len = read(s, buf, sizeof(buf));
+
+			/* Done getting final data? */
+			if (len == 0)
+				break;
+			else if (len < 0)
+			{
+				fprintf(stderr, "read returned an error\r\n");
+				return 1;
+			}
+			/* Send the data to the terminal. */
+			write(1, buf, len);
+			n--;
+		}
+	}
+
 	return 0;
 }
 
