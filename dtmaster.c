@@ -452,16 +452,17 @@ client_activity(struct client *p)
 /* The master process - It watches over the pty process and the attached */
 /* clients. */
 static int
-master_process(int s, char **argv, int waitattach, int statusfd)
+master_process(int s, char **argv, int waitattach, int nofork, int statusfd)
 {
 	struct client *p, *next;
 	fd_set readfds;
 	int highest_fd;
 	int nullfd;
 
-	/* Okay, disassociate ourselves from the original terminal, as we
-	** don't care what happens to it. */
-	setsid();
+	/* Okay, disassociate ourselves from the original terminal if
+	** daemonizing, as we don't care what happens to it. */
+	if (!nofork)
+		setsid();
 
 	/* Set a trap to unlink the socket when we die. */
 	atexit(unlink_socket);
@@ -498,14 +499,16 @@ master_process(int s, char **argv, int waitattach, int statusfd)
 	if (statusfd != -1)
 		close(statusfd);
 
-	/* Make sure stdin/stdout/stderr point to /dev/null. We are now a
+	/* Make sure stdin/stdout/stderr point to /dev/null if we are now a
 	** daemon. */
-	nullfd = open("/dev/null", O_RDWR);
-	dup2(nullfd, 0);
-	dup2(nullfd, 1);
-	dup2(nullfd, 2);
-	if (nullfd > 2)
-		close(nullfd);
+	if (!nofork) {
+		nullfd = open("/dev/null", O_RDWR);
+		dup2(nullfd, 0);
+		dup2(nullfd, 1);
+		dup2(nullfd, 2);
+		if (nullfd > 2)
+			close(nullfd);
+	}
 
 	/* Main loop. */
 	stop = 0;
@@ -645,7 +648,7 @@ master_main(char **argv, int waitattach, int nofork)
 	else /* Not forking, send status to stderr */
 		fd[1] = dup(2);
 
-	return master_process(s, argv, waitattach, fd[1]);
+	return master_process(s, argv, waitattach, nofork, fd[1]);
 }
 
 int
